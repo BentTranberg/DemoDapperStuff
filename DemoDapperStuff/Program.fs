@@ -38,6 +38,11 @@ let getUsersWithRole (role: string) =
     (conn, "SELECT * FROM " + tableUser + " WHERE Role = @role", {| role = role |})
     |> Da.queryMultipleToList<EntUser>
 
+let getUserByName (userName: string) =
+    use conn = new SqlConnection(connectionString)
+    (conn, "SELECT * FROM " + tableUser + " WHERE UserName = @userName", {| userName = userName |})
+    |> Da.querySingleOrDefault<EntUser>
+
 [<EntryPoint>]
 let main _ =
     truncateUsersTable () |> ignore // Start with a clean slate.
@@ -63,6 +68,14 @@ let main _ =
     printfn "List of role Baggins."
     getUsersWithRole "baggins"
     |> List.iter (fun user -> printfn "  Id=%d User=%s Role=%s" user.Id user.UserName user.Role)
+
+    let findUser userName =
+        printfn "Find %s." userName
+        match getUserByName userName with
+        | Some user -> printfn "  Id=%d User=%s Role=%s" user.Id user.UserName user.Role
+        | None -> printfn "  User %s not found." userName
+    findUser "Frodo"
+    findUser "Nobody"
 
     printfn "Done."
     Console.ReadKey() |> ignore
