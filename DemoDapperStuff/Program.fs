@@ -35,10 +35,21 @@ let getUsers () =
     (conn, "SELECT * FROM " + tableUser, null)
     |> Da.queryMultipleToList<EntUser>
 
+let getUsersWithRole (role: string) =
+    use conn = new SqlConnection(connectionString)
+    (conn, "SELECT * FROM " + tableUser + " WHERE Role = @role", {| role = role |})
+    |> Da.queryMultipleToList<EntUser>
+
 [<EntryPoint>]
 let main _ =
+    printfn "List of all users"
     getUsers ()
-    |> List.iter (fun user -> printfn "Id=%d User=%s" user.Id user.UserName)
+    |> List.iter (fun user -> printfn "  Id=%d User=%s" user.Id user.UserName)
+
+    printfn "List of admin users"
+    getUsersWithRole "baggins"
+    |> List.iter (fun user -> printfn "  Id=%d User=%s Role=%s" user.Id user.UserName user.Role)
+
     printfn "Done."
     Console.ReadKey() |> ignore
     0
