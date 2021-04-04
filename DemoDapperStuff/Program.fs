@@ -6,15 +6,6 @@ open Dapper
 open Dapper.Contrib
 open Dapper.Contrib.Extensions
 
-module Da =
-
-    let queryMultipleAsSeq<'T> (conn: SqlConnection, sql: string, args: obj) : 'T seq =
-        conn.Query<'T> (sql, args)
-
-    let queryMultipleToList<'T> (conn: SqlConnection, sql: string, args: obj) : 'T list =
-        queryMultipleAsSeq (conn, sql, args)
-        |> Seq.toList
-
 let connectionString =
     // @"Server=.\SqlExpress;Database=DemoDb;User Id=sa;Password=password;"
     @"Server=.\SqlExpress;Database=DemoDb;Trusted_Connection=True;"
@@ -23,12 +14,7 @@ let connectionString =
 let [<Literal>] tableUser = "[User]" // "User" is a keyword, so the brackets are needed here.
 
 [<Table (tableUser); CLIMutable>]
-type EntUser =
-    {
-        Id: int
-        UserName: string
-        Role: string
-    }
+type EntUser = { Id: int; UserName: string; Role: string }
 
 let getUsers () =
     use conn = new SqlConnection(connectionString)
