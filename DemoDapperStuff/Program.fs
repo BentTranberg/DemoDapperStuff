@@ -28,6 +28,17 @@ let addUsers (users: EntUser list) =
     use conn = new SqlConnection(connectionString)
     Da.insertEntities (conn, users) |> ignore
 
+let changeUserRoleByName (userName: string) (newRole: string) =
+    use conn = new SqlConnection(connectionString)
+    let user =
+        (conn, "SELECT * FROM " + tableUser + " WHERE UserName = @userName", {| userName = userName |})
+        |> Da.querySingleOrDefault<EntUser>
+    match user with
+    | Some user ->
+        let user = { user with Role = newRole }
+        Da.updateEntity<EntUser> (conn, user)
+    | None -> false
+
 let getUsers () =
     use conn = new SqlConnection(connectionString)
     (conn, "SELECT * FROM " + tableUser, null)
@@ -42,6 +53,11 @@ let getUserByName (userName: string) =
     use conn = new SqlConnection(connectionString)
     (conn, "SELECT * FROM " + tableUser + " WHERE UserName = @userName", {| userName = userName |})
     |> Da.querySingleOrDefault<EntUser>
+
+// Just a note about SQL injection attacks, in case you wonder about the SQL used above.
+// The arguments to the query are supplied in the recommended way. In case you wonder
+// about the use of the tableUser to construct the query, this is a literal string. As
+// such it can't be used to modify the query string during program execution.
 
 [<EntryPoint>]
 let main _ =
@@ -76,6 +92,11 @@ let main _ =
         | None -> printfn "  User %s not found." userName
     findUser "Frodo"
     findUser "Nobody"
+
+    printfn "Make Frodo a hero."
+    match changeUserRoleByName "Frodo" "hero" with
+    | true -> printfn "Frodo is a hero."
+    | false -> printfn "Can't make Frodo a hero."
 
     printfn "Done."
     Console.ReadKey() |> ignore
