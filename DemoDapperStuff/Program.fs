@@ -6,18 +6,21 @@ open Dapper
 open Dapper.Contrib
 open Dapper.Contrib.Extensions
 
-let queryMultipleAsSeq<'T> (conn: SqlConnection, sql: string, args: obj) : 'T seq =
-    conn.Query<'T> (sql, args)
+module Da =
 
-let queryMultipleToList<'T> (conn: SqlConnection, sql: string, args: obj) : 'T list =
-    queryMultipleAsSeq (conn, sql, args)
-    |> Seq.toList
+    let queryMultipleAsSeq<'T> (conn: SqlConnection, sql: string, args: obj) : 'T seq =
+        conn.Query<'T> (sql, args)
+
+    let queryMultipleToList<'T> (conn: SqlConnection, sql: string, args: obj) : 'T list =
+        queryMultipleAsSeq (conn, sql, args)
+        |> Seq.toList
 
 let connectionString =
     // @"Server=.\SqlExpress;Database=DemoDb;User Id=sa;Password=password;"
     @"Server=.\SqlExpress;Database=DemoDb;Trusted_Connection=True;"
 
-let [<Literal>] tableUser = "User"
+// Table names. Use brackets around table names, so that they never fail.
+let [<Literal>] tableUser = "[User]" // "User" is a keyword, so the brackets are needed here.
 
 [<Table (tableUser); CLIMutable>]
 type EntUser =
@@ -25,13 +28,12 @@ type EntUser =
         Id: int
         UserName: string
         Role: string
-        PasswordHash: string
     }
 
 let getUsers () =
     use conn = new SqlConnection(connectionString)
-    (conn, "SELECT * FROM [" + tableUser + "]", null)
-    |> queryMultipleToList<EntUser>
+    (conn, "SELECT * FROM " + tableUser, null)
+    |> Da.queryMultipleToList<EntUser>
 
 [<EntryPoint>]
 let main _ =
